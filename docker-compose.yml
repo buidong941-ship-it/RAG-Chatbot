@@ -1,0 +1,42 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: pgvector
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ragdb
+    ports:
+      # Use "5432:5432" on machines that do not already run PostgreSQL locally.
+      # Use "5433:5432" if local port 5432 is already occupied.
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ragdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: always
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    # If the machine has NVIDIA GPU support in Docker, this grants GPU access to Ollama.
+    # Without GPU support, the app still works on CPU but generation will be slower.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  pgdata:
+  ollama_data:
